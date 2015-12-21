@@ -1,0 +1,38 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+
+  # Every Vagrant virtual environment requires a box to build off of.
+  config.vm.box = "ubuntu/trusty64"
+
+  config.vm.network :forwarded_port, guest: 80, host: 8080
+  config.vm.provider "virtualbox" do |vb|
+    vb.gui = false
+    vb.name = "aws wordpress machine"
+    vb.customize ["modifyvm", :id, "--memory", "4096"]
+  end
+
+$script = <<SCRIPT
+echo Provisioning...
+sudo apt-get update
+sudo apt-get dist-upgrade --yes --force-yes
+sudo apt-get install --yes --force-yes git python-dev python-virtualenv virtualenvwrapper
+source ~/.bashrc
+mkvirtualenv aws
+git clone https://github.com/depaolidaniel/go-to-live-kata.git
+cd go-to-live-kata
+pip install -r requirements.txt
+ssh-keygen -t rsa -b 4096 -P "" -f ~/.ssh/id_rsa
+echo
+echo
+cat ~/.ssh/id_rsa.pub
+echo "Now copy the above key"
+SCRIPT
+
+  config.vm.provision "shell", inline: $script, privileged: false
+
+end
